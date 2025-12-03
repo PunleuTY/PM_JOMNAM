@@ -1,6 +1,8 @@
 import { loadProject } from "@/lib/storage";
 
-const BACKEND_PROJECT_URL = `${import.meta.env.VITE_BACKEND_BASE_ENDPOINT}/projects`;
+const BACKEND_PROJECT_URL = `${
+  import.meta.env.VITE_BACKEND_BASE_ENDPOINT
+}/projects`;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_ENDPOINT;
 
 // Load all projects
@@ -54,6 +56,26 @@ export const getImageByProjectAPI = async (id) => {
     return data;
   } catch (e) {
     console.error("Failed to fetch project images:", e.message);
+    return null; // fallback
+  }
+};
+
+// Get project details by ID
+export const getProjectByIdAPI = async (id) => {
+  try {
+    const res = await fetch(`${BACKEND_PROJECT_URL}/${id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.project || data; // handle {project: {...}} or direct object
+  } catch (e) {
+    console.error("Failed to fetch project details:", e.message);
     return null; // fallback
   }
 };

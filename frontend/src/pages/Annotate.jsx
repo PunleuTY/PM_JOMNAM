@@ -23,6 +23,8 @@ import {
   VectorSquare,
   GalleryVerticalEnd,
   Redo,
+  FolderOpen,
+  Edit3,
 } from "lucide-react";
 
 import { JsonEditor } from "@/components/json-editor";
@@ -35,7 +37,10 @@ import { ExportDialog } from "@/components/export-dialog";
 import { uploadImages, saveGroundTruth } from "@/server/sendImageAPI";
 import CreateProjectForm from "@/components/CreateProjectForm";
 import { ImageUploader } from "@/components/image-uploader";
-import { getImageByProjectAPI } from "@/server/saveResultAPI";
+import {
+  getImageByProjectAPI,
+  getProjectByIdAPI,
+} from "@/server/saveResultAPI";
 import { useShortcuts } from "../lib/userShortcuts.js";
 import { GalleryView } from "@/components/GalleryView";
 import ReusableTable from "../components/ui/myproject.jsx";
@@ -71,6 +76,8 @@ const Annotate = () => {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [project, setProject] = useState(null);
+  const [projectLoading, setProjectLoading] = useState(false);
   const [batchInfo, setBatchInfo] = useState({
     running: false,
     current: 0,
@@ -93,8 +100,19 @@ const Annotate = () => {
   // --- Load Project if Exists ---
   useEffect(() => {
     console.log("corrent P:", CurrentProjectContext);
-    const fetchImages = async () => {
+
+    const fetchProjectData = async () => {
+      if (!id) return;
+
+      setProjectLoading(true);
       try {
+        // Load project details
+        const projectData = await getProjectByIdAPI(id);
+        if (projectData) {
+          setProject(projectData);
+        }
+
+        // Load project images
         const data = await getImageByProjectAPI(id);
         if (data) {
           const processedImages = data.map((img) => ({
@@ -115,14 +133,13 @@ const Annotate = () => {
           setImages(processedImages);
         }
       } catch (error) {
-        console.error("Failed to fetch images in useEffect:", error);
+        console.error("Failed to fetch project data:", error);
+      } finally {
+        setProjectLoading(false);
       }
     };
 
-    if (id) {
-      // Prevents the API from being called on initial render if context is null
-      fetchImages();
-    }
+    fetchProjectData();
   }, [id]);
 
   const fetchSaveGroundTruth = async () => {
@@ -427,8 +444,46 @@ const Annotate = () => {
 
   return (
     <div className="min-h-full bg-gray-50">
+      {/* Back Navigation */}
+      {project && (
+        <div className="px-6 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/project")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Projects
+          </Button>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex justify-center px-6 pt-6">
-        <h1 className="text-5xl text-[#F88F2D] font-cadt pb-5">My Workspace</h1>
+        {projectLoading ? (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+            <h1 className="text-5xl text-[#F88F2D] font-cadt pb-5">
+              Loading...
+            </h1>
+          </div>
+        ) : project ? (
+          <div className="text-center">
+            <h1 className="text-5xl text-[#F88F2D] font-cadt pb-2">
+              {project.name}
+            </h1>
+            {project.description && (
+              <p className="text-gray-600 text-lg pb-3">
+                {project.description}
+              </p>
+            )}
+            <p className="text-sm text-gray-500 mb-4">Annotation Workspace</p>
+          </div>
+        ) : (
+          <h1 className="text-5xl text-[#F88F2D] font-cadt pb-5">
+            My Workspace
+          </h1>
+        )}
       </div>
       {!CurrentProjectContext ? (
         <CreateProjectForm
@@ -439,47 +494,22 @@ const Annotate = () => {
         <>
           {/* Project Information Card */}
           <div className="px-6 mb-4">
-            <Card className="bg-white rounded-xl shadow-md border-l-4 border-[#F88F2D]">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FolderOpen className="w-5 h-5 text-[#F88F2D]" />
-                    Current Project
-                    <span className="text-sm text-gray-500 font-normal">
-                      #{CurrentProjectContext}
-                    </span>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleEditProject}
-                      className="h-8 w-8 p-0 border-gray-300 hover:border-[#F88F2D] hover:text-[#F88F2D]"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDeleteProject}
-                      className="h-8 w-8 p-0 border-gray-300 hover:border-red-500 hover:text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+            <Card className="bg-white rounded-xl shadow-md border-l-4 border-[#F88F2D] p-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5 text-[#F88F2D]" />
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Current Project: {project?.name || "Loading Project..."}
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span>Images: {images.length}</span>
                   <span>•</span>
                   <span>
                     Annotations: {Object.values(annotations).flat().length}
                   </span>
-                  <span>•</span>
-                  <span>Current: {currentImage?.name || "None selected"}</span>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </div>
 
