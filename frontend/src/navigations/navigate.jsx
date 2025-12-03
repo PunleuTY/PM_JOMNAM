@@ -39,10 +39,13 @@ const Sidebar = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo Section */}
-            <NavLink to='/' className="flex items-center space-x-3">
-              <img src={NewLogo} alt="Logo" className=" object-cover w-32 h-12 p-0" />
+            <NavLink to="/" className="flex items-center space-x-3">
+              <img
+                src={NewLogo}
+                alt="Logo"
+                className=" object-cover w-32 h-12 p-0"
+              />
             </NavLink>
-
             {/* Navigation Menu */}
             <div className="flex items-center space-x-2">
               {navigationItems.map((item) => {
@@ -81,24 +84,23 @@ const Sidebar = () => {
                 );
               })}
             </div>
-
             {/* Profile or Login Section */}
-            {isLoggedIn ? (
-              <div className="relative cursor-pointer group">
-                <NavLink
-                  key={"profile"}
-                  to={"profile"} 
-                  className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110" />
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
-              </div>
+            {/* {isLoggedIn ? ( */}
+            {/* <div className="relative cursor-pointer group">
+              <NavLink
+                key={"profile"}
+                to={"profile"}
+                className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+            </div>
             ) : (
-              <button
-                onClick={handleLogin}
-                className="px-5 py-2.5 rounded-md text-sm font-medium text-white bg-gradient-to-r from-orange-400 to-orange-500 shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                Login
-              </button>
-            )}
+            <button
+              onClick={handleLogin}
+              className="px-5 py-2.5 rounded-md text-sm font-medium text-white bg-gradient-to-r from-orange-400 to-orange-500 shadow-md hover:shadow-lg transition-all duration-300"
+            >
+              Login
+            </button> */}
           </div>
         </div>
       </nav>
@@ -107,8 +109,12 @@ const Sidebar = () => {
       <div className="md:hidden">
         {/* Mobile Header */}
         <div className="flex items-center justify-between px-6 py-4 shadow-md">
-          <NavLink to='/' className="flex items-center space-x-3">
-            <img src={NewLogo} alt="Logo" className=" object-cover w-28 h-10 p-0" />
+          <NavLink to="/" className="flex items-center space-x-3">
+            <img
+              src={NewLogo}
+              alt="Logo"
+              className=" object-cover w-28 h-10 p-0"
+            />
           </NavLink>
 
           <button
@@ -136,8 +142,9 @@ const Sidebar = () => {
                 <div className="relative">
                   <NavLink
                     key={"profile"}
-                    to={"profile"} 
-                    className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110" />
+                    to={"profile"}
+                    className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110"
+                  />
                   <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
               </div>
@@ -180,7 +187,7 @@ const Sidebar = () => {
 
             {/* Logout Button (only show if logged in) */}
             {isLoggedIn && (
-              <button 
+              <button
                 onClick={handleLogout}
                 className="w-full px-6 py-3 rounded-xl font-medium text-base text-gray-600 hover:bg-white hover:text-red-500 hover:shadow-md transition-all duration-300 flex items-center justify-center space-x-2 mt-4"
               >
