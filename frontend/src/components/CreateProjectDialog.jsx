@@ -23,22 +23,17 @@ export default function CreateProjectDialog({
   const [newProjectDescription, setNewProjectDescription] = useState("");
 
   const handleCreateProject = () => {
-    if (!newProjectName.trim() || !newProjectDescription.trim()) {
+    if (!newProjectName.trim()) {
       toast.warn(t("workspace.createProject.requiredFields"));
       return;
     }
 
-    const newProject = {
-      id: `${Date.now()}`,
+    const projectData = {
       name: newProjectName.trim(),
       description: newProjectDescription.trim(),
-      imageCount: 0,
-      annotatedCount: 0,
-      updatedAt: new Date().toISOString().split("T")[0],
-      status: "not-started",
     };
 
-    onCreateProject(newProject);
+    onCreateProject(projectData);
     setNewProjectName("");
     setNewProjectDescription("");
     onOpenChange(false);
@@ -71,7 +66,7 @@ export default function CreateProjectDialog({
               htmlFor="project-description"
               className="text-sm font-medium"
             >
-              Description <span className="text-red-500">*</span>
+              Description
             </Label>
             <Textarea
               id="project-description"
@@ -80,7 +75,6 @@ export default function CreateProjectDialog({
               onChange={(e) => setNewProjectDescription(e.target.value)}
               rows={4}
               className="resize-none text-base"
-              required
             />
           </div>
         </div>
@@ -91,7 +85,7 @@ export default function CreateProjectDialog({
           <Button
             onClick={handleCreateProject}
             className="bg-orange-500 hover:bg-orange-600 text-white font-medium"
-            disabled={!newProjectName.trim() || !newProjectDescription.trim()}
+            disabled={!newProjectName.trim()}
           >
             Create Project
           </Button>
