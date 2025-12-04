@@ -494,22 +494,45 @@ const Annotate = () => {
         <>
           {/* Project Information Card */}
           <div className="px-6 mb-4">
-            <Card className="bg-white rounded-xl shadow-md border-l-4 border-[#F88F2D] p-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="w-5 h-5 text-[#F88F2D]" />
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Current Project: {project?.name || "Loading Project..."}
-                  </h3>
+            <Card className="bg-white rounded-xl shadow-md border-l-4 border-[#F88F2D]">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FolderOpen className="w-5 h-5 text-[#F88F2D]" />
+                    Current Project
+                    <span className="text-sm text-gray-500 font-normal">
+                      #{CurrentProjectContext}
+                    </span>
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 border-gray-300 hover:border-[#F88F2D] hover:text-[#F88F2D]"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 border-gray-300 hover:border-red-500 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+              </CardHeader>
+              <CardContent className="pt-0">
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span>Images: {images.length}</span>
                   <span>•</span>
                   <span>
                     Annotations: {Object.values(annotations).flat().length}
                   </span>
+                  <span>•</span>
+                  <span>Current: {currentImage?.name || "None selected"}</span>
                 </div>
-              </div>
+              </CardContent>
             </Card>
           </div>
 
