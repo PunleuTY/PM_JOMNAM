@@ -80,6 +80,40 @@ export const getProjectByIdAPI = async (id) => {
   }
 };
 
+// Upload images to a project
+export const uploadImagesToProjectAPI = async (projectId, files) => {
+  try {
+    const formData = new FormData();
+    formData.append("project_id", projectId);
+
+    // Append all files
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    // Empty annotations initially
+    formData.append("annotations", JSON.stringify([]));
+
+    const res = await fetch(
+      `${BACKEND_PROJECT_URL.replace("/projects", "")}/images/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    console.error("Failed to upload images to project:", e.message);
+    throw e;
+  }
+};
+
 // Save result
 export const saveResultAPI = async (resultData) => {
   try {

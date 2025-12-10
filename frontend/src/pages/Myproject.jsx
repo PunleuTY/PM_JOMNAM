@@ -89,18 +89,6 @@ export default function WorkspacePage() {
     return matchesSearch && matchesStatus;
   });
 
-  const stats = {
-    total: projects.length,
-    inProgress: projects.filter((p) => p.status === "in-progress").length,
-    completed: projects.filter((p) => p.status === "completed").length,
-    totalImages: projects.reduce((sum, p) => sum + p.imageCount, 0),
-    totalAnnotated: projects.reduce((sum, p) => sum + p.annotatedCount, 0),
-  };
-
-  const completionRate = Math.round(
-    (stats.totalAnnotated / stats.totalImages) * 100
-  );
-
   const handleCreateProject = async (newProjectData) => {
     try {
       await createProjectAPI(newProjectData.name, newProjectData.description);
@@ -188,7 +176,7 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between items-center">
       {/* Header Section */}
       <header>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 text-center">
@@ -202,7 +190,7 @@ export default function WorkspacePage() {
       </header>
 
       {/* Project Statistics */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard
           icon={<FolderOpen />}
           label="Total Projects"
@@ -234,104 +222,93 @@ export default function WorkspacePage() {
           color="bg-slate-800"
           sub={`${stats.totalAnnotated} annotated`}
         />
-      </section>
+      </section> */}
 
       {/* Search & Filter Bar */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input
-            placeholder={t("Search your projects...")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 text-base border-gray-300"
-          />
-        </div>
-        <div className="relative w-56">
-          {/* Custom dropdown: button toggles menu to allow full styling of popup */}
-          <StatusDropdown
-            value={filterStatus}
-            onChange={(v) => setFilterStatus(v)}
-            options={[
-              { value: "all", label: t("All Status") },
-              { value: "in-progress", label: t("In Progress") },
-              { value: "completed", label: t("Completed") },
-              { value: "not-started", label: t("Not Started") },
-            ]}
-          />
-        </div>
-      </section>
-
-      {/* Error Message */}
-      {error && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 mb-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-            <MdSmsFailed />
-            <span>{error}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setError(null);
-                loadProjects();
-              }}
-              className="ml-auto"
-            >
-              Retry
-            </Button>
-          </div>
-        </section>
-      )}
-
-      {/* Project List */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4 mb-5">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
-            <p className="text-gray-500 text-lg">Loading projects...</p>
-          </div>
-        ) : filteredProjects.length > 0 ? (
-          filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onEdit={handleEditProject}
-              onDelete={handleDeleteProject}
+      <div className="flex flex-col w-full max-w-7xl justify-center items-center mx-auto px-4 sm:px-6">
+        <section className="w-full mx-auto pb-8 flex gap-3 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              placeholder={t("Search your projects...")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 text-base border-gray-300"
             />
-          ))
-        ) : (
-          <div className="text-center py-20">
-            <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg mb-2">
-              {searchQuery || filterStatus !== "all"
-                ? "No projects match your search"
-                : "No projects yet"}
-            </p>
-            <p className="text-gray-400 text-sm mb-6">
-              {searchQuery || filterStatus !== "all"
-                ? "Try adjusting your search or filter criteria"
-                : "Create your first project to get started"}
-            </p>
-            {!searchQuery && filterStatus === "all" && (
-              <Button
-                onClick={() => setCreateDialogOpen(true)}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Project
-              </Button>
-            )}
           </div>
-        )}
-      </section>
 
-      {/* Floating Add Project Button */}
-      <button
-        onClick={() => setCreateDialogOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-110"
-      >
-        <Plus className="w-8 h-8" />
-      </button>
+          {/* Create Button */}
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="h-14 w-14 rounded-full bg-[#F88F2D] hover:bg-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center flex-shrink-0"
+          >
+            <Plus className="w-7 h-7" />
+          </Button>
+        </section>
+
+        {/* Error Message */}
+        {error && (
+          <section className="w-full mx-auto mb-4">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <MdSmsFailed />
+              <span>{error}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setError(null);
+                  loadProjects();
+                }}
+                className="ml-auto"
+              >
+                Retry
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {/* Project List */}
+        <section className="w-full mx-auto space-y-4 mb-5">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+              <p className="text-gray-500 text-lg">Loading projects...</p>
+            </div>
+          ) : filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onEdit={handleEditProject}
+                onDelete={handleDeleteProject}
+              />
+            ))
+          ) : (
+            <div className="text-center py-20">
+              <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg mb-2">
+                {searchQuery || filterStatus !== "all"
+                  ? "No projects match your search"
+                  : "No projects yet"}
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                {searchQuery || filterStatus !== "all"
+                  ? "Try adjusting your search or filter criteria"
+                  : "Create your first project to get started"}
+              </p>
+              {!searchQuery && filterStatus === "all" && (
+                <Button
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Project
+                </Button>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Create Project Dialog */}
       <CreateProjectDialog
@@ -469,26 +446,10 @@ export default function WorkspacePage() {
   );
 }
 
-function StatCard({ icon, label, value, color, sub }) {
-  return (
-    <div className={`${color} rounded-2xl p-6 text-white`}>
-      <div className="flex items-center gap-3 mb-2 opacity-90">{icon}</div>
-      <div className="text-sm font-medium mb-1 opacity-80">{label}</div>
-      <div className="text-4xl font-bold">{value}</div>
-      {sub && <div className="text-xs opacity-70 mt-1">{sub}</div>}
-    </div>
-  );
-}
-
 function ProjectCard({ project, onEdit, onDelete }) {
   const progress = project.imageCount
     ? Math.round((project.annotatedCount / project.imageCount) * 100)
     : 0;
-  const statusColors = {
-    "in-progress": "bg-orange-100 text-orange-700 border-orange-300",
-    completed: "bg-emerald-100 text-emerald-700 border-emerald-300",
-    "not-started": "bg-gray-100 text-gray-700 border-gray-300",
-  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -498,13 +459,6 @@ function ProjectCard({ project, onEdit, onDelete }) {
           <p className="text-gray-600 text-sm">{project.description}</p>
         </div>
         <div className="flex items-center gap-2 ml-4">
-          <Badge
-            className={`${
-              statusColors[project.status]
-            } border px-3 py-1 text-sm font-medium`}
-          >
-            {project.status.replace("-", " ").toUpperCase()}
-          </Badge>
           <Button
             variant="outline"
             size="sm"
@@ -523,8 +477,8 @@ function ProjectCard({ project, onEdit, onDelete }) {
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-6 text-sm text-gray-600 mb-4 justify-between">
+        {/* <div className="flex items-center gap-2">
           <ImageIcon className="w-4 h-4" />
           <span className="font-semibold">{project.imageCount}</span> Images
         </div>
@@ -532,29 +486,29 @@ function ProjectCard({ project, onEdit, onDelete }) {
           <CheckCircle2 className="w-4 h-4" />
           <span className="font-semibold">{project.annotatedCount}</span>{" "}
           Annotated
-        </div>
+        </div> */}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
           <span>
             Updated {new Date(project.updatedAt).toLocaleDateString()}
           </span>
         </div>
+        <Link to={`/Annotate/${project.id}`}>
+          <Button className="bg-slate-800 hover:bg-slate-900 text-white gap-2">
+            Open <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex-1">
+        {/* <div className="flex-1">
           <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-orange-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
-        </div>
-        <span className="text-sm font-bold w-12 text-right">{progress}%</span>
-        <Link to={`/Annotate/${project.id}`}>
-          <Button className="bg-slate-800 hover:bg-slate-900 text-white gap-2">
-            Open <ArrowRight className="w-4 h-4" />
-          </Button>
-        </Link>
+        </div> */}
+        {/* <span className="text-sm font-bold w-12 text-right">{progress}%</span> */}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Footer from "../components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
   Redo,
   FolderOpen,
   Edit3,
+  Save,
 } from "lucide-react";
 
 import { JsonEditor } from "@/components/json-editor";
@@ -33,13 +35,13 @@ import { AnnotationCanvas } from "@/components/annotation-canvas";
 import { levenshteinSimilarity } from "@/lib/levenshtein";
 import { saveProject, clearProject } from "@/lib/storage";
 import { ExportDialog } from "@/components/export-dialog";
-// import { CurrentProjectContext, ProjectContext } from "./Myproject";
 import { uploadImages, saveGroundTruth } from "@/server/sendImageAPI";
 import CreateProjectForm from "@/components/CreateProjectForm";
 import { ImageUploader } from "@/components/image-uploader";
 import {
   getImageByProjectAPI,
   getProjectByIdAPI,
+  uploadImagesToProjectAPI,
 } from "@/server/saveResultAPI";
 import { useShortcuts } from "../lib/userShortcuts.js";
 import { GalleryView } from "@/components/GalleryView";
@@ -212,10 +214,70 @@ const Annotate = () => {
       let fileToSend;
       if (currentImage.file) {
         fileToSend = currentImage.file;
-      } else if (currentImage.url) {
-        const resp = await fetch(currentImage.url);
-        const blob = await resp.blob();
-        fileToSend = new File([blob], currentImage.name);
+        console.log(
+          "Using original file:",
+          fileToSend.name,
+          fileToSend.type,
+          fileToSend.size
+        );
+      } else if (currentImage.url || currentImage.base64) {
+        try {
+          // Use base64 if available, otherwise use url
+          const imageData = currentImage.base64 || currentImage.url;
+
+          if (!imageData) {
+            console.error("No image data found");
+            return;
+          }
+
+          console.log("Image data type:", typeof imageData);
+          console.log("Image data preview:", imageData.substring(0, 50));
+
+          // Extract MIME type from data URL if present
+          let mimeType = "image/jpeg"; // default
+          if (imageData.startsWith("data:")) {
+            const match = imageData.match(/^data:([^;]+);/);
+            if (match) {
+              mimeType = match[1];
+            }
+          }
+
+          // Handle both base64 data URLs and regular URLs
+          const resp = await fetch(imageData);
+          if (!resp.ok) {
+            console.error("Fetch failed:", resp.status, resp.statusText);
+            return;
+          }
+
+          const blob = await resp.blob();
+          console.log("Blob created:", blob.size, "bytes, type:", blob.type);
+
+          // Validate blob
+          if (blob.size === 0) {
+            console.error("Blob is empty after conversion");
+            return;
+          }
+
+          // Use extracted MIME type if blob type is empty
+          if (!blob.type && mimeType) {
+            const fileName = currentImage.name || "image.jpg";
+            fileToSend = new File([blob], fileName, { type: mimeType });
+          } else {
+            const fileName = currentImage.name || "image.jpg";
+            fileToSend = new File([blob], fileName, {
+              type: blob.type || mimeType,
+            });
+          }
+
+          console.log("File prepared:", {
+            name: fileToSend.name,
+            type: fileToSend.type,
+            size: fileToSend.size,
+          });
+        } catch (error) {
+          console.error("Error converting image to file:", error);
+          return;
+        }
       } else {
         console.error("No file or URL found for image", currentImage);
         return;
@@ -242,10 +304,17 @@ const Annotate = () => {
         [currentId]: updatedAnns,
       }));
 
-      setSuccessMsg("OCR completed successfully!");
-      setTimeout(() => setSuccessMsg(""), 2000);
+      // Auto-save annotations after OCR
+      try {
+        await saveGroundTruth(currentImage.name, id, currentId, updatedAnns);
+        toast.success("OCR completed and saved successfully!");
+      } catch (saveErr) {
+        console.error("Failed to save after OCR:", saveErr);
+        toast.error("OCR completed but failed to save");
+      }
     } catch (err) {
       console.error("OCR failed:", err);
+      toast.error("OCR failed");
     } finally {
       setOcrLoading(false);
     }
@@ -254,7 +323,26 @@ const Annotate = () => {
   // --- Autosave ---
   useEffect(() => {
     saveProject({ images, annotations, currentId, lang });
-  }, [images, annotations, currentId, lang]);
+
+    // Auto-save to backend when annotations change
+    const saveTimer = setTimeout(() => {
+      if (id && currentId && annotations[currentId]?.length > 0) {
+        const currentImg = images.find((i) => i.id === currentId);
+        if (currentImg) {
+          saveGroundTruth(
+            currentImg.name,
+            id,
+            currentId,
+            annotations[currentId]
+          )
+            .then(() => console.log("Auto-saved annotations"))
+            .catch((err) => console.error("Auto-save failed:", err));
+        }
+      }
+    }, 3000); // Debounce 3 seconds
+
+    return () => clearTimeout(saveTimer);
+  }, [images, annotations, currentId, lang, id]);
 
   useEffect(() => {
     // Fetch annotations when the component mounts
@@ -263,12 +351,47 @@ const Annotate = () => {
   }, [annotations, currentId, images]);
 
   const handleFiles = async (items) => {
-    const updated = [...images, ...items];
-    setImages(updated);
-    if (!currentId && updated.length > 0) {
-      setCurrentId(updated[0].id);
+    if (!id) {
+      // If no project ID, just add to local state
+      const updated = [...images, ...items];
+      setImages(updated);
+      if (!currentId && updated.length > 0) {
+        setCurrentId(updated[0].id);
+      }
+      return;
     }
-    // setSelectedFiles(items);
+
+    // Upload to backend
+    try {
+      // Convert items to File objects if needed
+      const filesToUpload = items.map((item) => item.file || item);
+
+      await uploadImagesToProjectAPI(id, filesToUpload);
+
+      // Reload images from backend to get the saved data with IDs
+      const data = await getImageByProjectAPI(id);
+      if (data) {
+        const processedImages = data.map((img) => ({
+          ...img,
+          url: img.base64,
+        }));
+
+        setImages(processedImages);
+
+        // Set current ID to the first newly uploaded image
+        if (!currentId && processedImages.length > 0) {
+          setCurrentId(
+            processedImages[processedImages.length - items.length]?.id ||
+              processedImages[0].id
+          );
+        }
+      }
+
+      toast.success(`${items.length} image(s) uploaded successfully!`);
+    } catch (error) {
+      console.error("Failed to upload images:", error);
+      toast.error("Failed to upload images to project");
+    }
   };
 
   // --- Navigation ---
@@ -467,21 +590,9 @@ const Annotate = () => {
               Loading...
             </h1>
           </div>
-        ) : project ? (
-          <div className="text-center">
-            <h1 className="text-5xl text-[#F88F2D] font-cadt pb-2">
-              {project.name}
-            </h1>
-            {project.description && (
-              <p className="text-gray-600 text-lg pb-3">
-                {project.description}
-              </p>
-            )}
-            <p className="text-sm text-gray-500 mb-4">Annotation Workspace</p>
-          </div>
         ) : (
           <h1 className="text-5xl text-[#F88F2D] font-cadt pb-5">
-            My Workspace
+            Annotation Workspace
           </h1>
         )}
       </div>
@@ -495,14 +606,11 @@ const Annotate = () => {
           {/* Project Information Card */}
           <div className="px-6 mb-4">
             <Card className="bg-white rounded-xl shadow-md border-l-4 border-[#F88F2D]">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FolderOpen className="w-5 h-5 text-[#F88F2D]" />
-                    Current Project
-                    <span className="text-sm text-gray-500 font-normal">
-                      #{CurrentProjectContext}
-                    </span>
+                    Current Project: {project?.name || "Untitled Project"}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
@@ -522,17 +630,13 @@ const Annotate = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Images: {images.length}</span>
-                  <span>•</span>
-                  <span>
-                    Annotations: {Object.values(annotations).flat().length}
-                  </span>
-                  <span>•</span>
-                  <span>Current: {currentImage?.name || "None selected"}</span>
-                </div>
-              </CardContent>
+              {project?.description && (
+                <CardContent className=" pb-3">
+                  <p className="text-sm text-gray-600">
+                    Description: {project.description}
+                  </p>
+                </CardContent>
+              )}
             </Card>
           </div>
 
@@ -765,7 +869,7 @@ const Annotate = () => {
                     >
                       <SquareDashedMousePointer className="w-4 h-4" />
                     </Button>
-                    <Button
+                    {/* <Button
                       variant={mode === "polygon" ? "default" : "outline"}
                       onClick={() => setMode("polygon")}
                       className={
@@ -773,7 +877,7 @@ const Annotate = () => {
                       }
                     >
                       <VectorSquare className="w-4 h-4" />
-                    </Button>
+                    </Button> */}
                     <Button
                       variant={mode === "edit" ? "default" : "outline"}
                       onClick={() => setMode("edit")}
@@ -798,6 +902,19 @@ const Annotate = () => {
                           <ScanText className="w-4 h-4 mr-2" /> OCR Entire
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        fetchSaveGroundTruth();
+                        toast.success("Changes saved successfully!", {
+                          autoClose: 2000,
+                        });
+                      }}
+                      className="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4 mr-2" /> Save
                     </Button>
                     <Button
                       variant="outline"
