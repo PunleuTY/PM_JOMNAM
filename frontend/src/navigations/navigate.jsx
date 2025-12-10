@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { RiErrorWarningLine } from "react-icons/ri";
 import { FaSortAmountUp, FaHome } from "react-icons/fa";
 import { MdOutlineUploadFile } from "react-icons/md";
@@ -8,7 +8,6 @@ import { useState } from "react";
 import NewLogo from "../assets/JomNam_New_Logo1.png";
 
 const Sidebar = () => {
-  const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -18,11 +17,6 @@ const Sidebar = () => {
   const handleLogout = () => {
     console.log("Logging out...");
     setIsLoggedIn(false);
-  };
-
-  const handleLogin = () => {
-    console.log("Redirecting to login...");
-    navigate("/login");
   };
 
   const navigationItems = [
@@ -73,10 +67,6 @@ const Sidebar = () => {
 
                         {!isActive && hoveredItem === item.name && (
                           <span className="absolute inset-0 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full opacity-0 animate-pulse"></span>
-                        )}
-
-                        {isActive && (
-                          <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full animate-pulse"></span>
                         )}
                       </>
                     )}
@@ -150,7 +140,7 @@ const Sidebar = () => {
               </div>
             ) : (
               <div className="flex justify-center pb-4 border-b border-gray-200">
-                <button
+                {/* <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleLogin();
@@ -158,7 +148,7 @@ const Sidebar = () => {
                   className="px-6 py-2.5 rounded-lg text-base font-medium text-white bg-gradient-to-r from-orange-400 to-orange-500 shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   Login
-                </button>
+                </button> */}
               </div>
             )}
 
@@ -172,7 +162,7 @@ const Sidebar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   style={{ animationDelay: `${index * 50}ms` }}
                   className={({ isActive }) =>
-                    `w-full px-6 py-3 rounded-xl font-medium text-base transition-all duration-300 flex items-center space-x-3 animate-slideIn ${
+                    `w-full px-6 py-3 font-medium text-base transition-all duration-300 flex items-center space-x-3 animate-slideIn ${
                       isActive
                         ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg"
                         : "text-gray-700 hover:bg-white hover:shadow-md"

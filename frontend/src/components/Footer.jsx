@@ -14,7 +14,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-white text-[#12284C] pt-4">
+    <footer className="bg-white text-[#12284C] pt-4 w-full">
       {/* Mobile: 2x2 grid (logo | quick links) (contact | follow)
           md+: revert to multi-column layout
           Wrap grid so the whole 2x2 block is horizontally centered on small screens. */}

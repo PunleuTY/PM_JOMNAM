@@ -54,9 +54,9 @@ export default function CreateProjectForm({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Create New Project Card */}
-          <Card className="bg-white rounded-xl shadow-md border-b-4 border-t-4 border-[#12284c]">
+          {/* <Card className="bg-white rounded-xl shadow-md border-b-4 border-t-4 border-[#12284c]">
             <CardHeader>
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <Plus className="w-5 h-5" />
@@ -101,7 +101,7 @@ export default function CreateProjectForm({
                 {isCreating ? "Creating..." : "Create Project"}
               </Button>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Or Select Existing Project Card */}
           {showProjectsLink && (

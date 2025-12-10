@@ -50,9 +50,16 @@ def preprocess_for_ocr(pil_image):
 def process_user_boxes(image_bytes, boxes):
     print(f"\n[OCR DEBUG] Starting text extraction...")
     print(f"[OCR DEBUG] Number of boxes to process: {len(boxes)}")
+    print(f"[OCR DEBUG] Image bytes length: {len(image_bytes)}")
+    print(f"[OCR DEBUG] First 20 bytes: {image_bytes[:20]}")
     
-    pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    print(f"[OCR DEBUG] Image loaded - Size: {pil_image.size}, Mode: {pil_image.mode}")
+    try:
+        pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        print(f"[OCR DEBUG] Image loaded - Size: {pil_image.size}, Mode: {pil_image.mode}")
+    except Exception as e:
+        print(f"[OCR ERROR] Failed to load image: {e}")
+        print(f"[OCR ERROR] Image bytes type: {type(image_bytes)}")
+        raise
     
     detections = []
 
